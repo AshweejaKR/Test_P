@@ -1,0 +1,6 @@
+websocket_client
+requests
+bs4
+pandas
+openpyxl
+alice_blue

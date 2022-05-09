@@ -1,2 +1,2 @@
 # Test_P
-For Developing Algo Trading Bot Using Python And Learning Python, ML
+For Learning Python &amp; Developing Algo Trading Bot Using Python
