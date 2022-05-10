@@ -58,7 +58,7 @@ BALANCE = 0.0
 LTP = 0.0
 
 #Add Yours Stock Name here
-EMA_CROSS_SCRIP = 'SBIN'
+EMA_CROSS_SCRIP = 'INFY'
 
 # =============================================================================
 # =============================================================================
@@ -156,8 +156,11 @@ def logout(obj):
 def place_buy_order(ins_scrip, qty = 1):
     print("place_buy_order() ...")
     global OBJ
+    global LTP
+    sl = LTP - 2.5
+    tls = 1
     bal = OBJ.get_balance()
-    print("Before Buy Bal: ", bal)
+    #print("Before Buy Bal: ", bal)
     OBJ.place_order(transaction_type = TransactionType.Buy,
                          instrument = ins_scrip,
                          quantity = qty,
@@ -170,14 +173,17 @@ def place_buy_order(ins_scrip, qty = 1):
                          trailing_sl = None,
                          is_amo = False)
     bal = OBJ.get_balance()
-    print("After Buy Bal: ", bal)
+    #print("After Buy Bal: ", bal)
 # =============================================================================
 # =============================================================================     
 def place_sell_order(ins_scrip, qty = 1):
     print("place_sell_order() ...")
     global OBJ
+    global LTP
+    sl = LTP + 2.5
+    tsl = 1
     bal = OBJ.get_balance()
-    print("Before Sell Bal: ", bal)
+    #print("Before Sell Bal: ", bal)
     OBJ.place_order(transaction_type = TransactionType.Sell,
                          instrument = ins_scrip,
                          quantity = qty,
@@ -190,7 +196,7 @@ def place_sell_order(ins_scrip, qty = 1):
                          trailing_sl = None,
                          is_amo = False)
     bal = OBJ.get_balance()
-    print("After Sell Bal: ", bal)
+    #print("After Sell Bal: ", bal)
                          
 # =============================================================================
 # =============================================================================  
@@ -204,11 +210,12 @@ def event_handler_quote_update(tick):
     #print('event_handler_quote_update() ....')
     global LTP
     LTP = tick['ltp']
+    #print("LTP: ", LTP, "\n")
     
 # =============================================================================
 # =============================================================================
 def open_callback():
-    #print('open_callback() ....')
+    print('open_callback() ....')
     global SOCKET_OPENED
     SOCKET_OPENED = True
     
@@ -231,7 +238,7 @@ def main():
     global BALANCE
 
     DEBUG = 0
-    LTP = 483.95
+    LTP = 1565.00
     print("main() ....")
     
     if(DEBUG):
@@ -247,13 +254,13 @@ def main():
         exit(-1)
         
     data = OBJ.get_balance()
-    bal = data['data']['cash_positions'][0]['available']['cashmarginavailable']
+    bal = data['data']['cash_positions'][0]['net']
     BALANCE = float(bal)
     mis_multiplier = 4.5
 
     print('My Balance: ',  BALANCE)
     Qty = math.floor((BALANCE / LTP) * mis_multiplier)
-    print("SBIN QTY: ", Qty)
+    print("INFY QTY: ", Qty)
     
     ins_scrip = OBJ.get_instrument_by_symbol('NSE', EMA_CROSS_SCRIP)
     
@@ -271,7 +278,6 @@ def main():
 # =============================================================================    
 # --------------------- Test Strategy MA Crossover 15 & 9 SMA -----------------
     current_signal = ''
-    #Qty = 8 #Hard coded till Qty Calculation made correct
     #Just Debug
     #LTP = 5555555.555555
     #print("LTP: ", LTP)
@@ -284,7 +290,7 @@ def main():
             print('Balance: ',  BALANCE, "\n")
             
             data = OBJ.get_balance()
-            bal = data['data']['cash_positions'][0]['available']['cashmarginavailable']
+            bal = data['data']['cash_positions'][0]['net']
             BALANCE = float(bal)
 
             if(len(minute_close) > 16):
@@ -306,7 +312,7 @@ def main():
 
                 if(current_signal != 'buy'):
                     if(sma_s > sma_l):
-                        #Qty = math.floor((BALANCE / LTP) * mis_multiplier)
+                        Qty = math.floor((BALANCE / LTP) * mis_multiplier)
                         print(Qty)
                         if(Qty >= 1):
                             place_buy_order(ins_scrip, Qty)
@@ -317,29 +323,14 @@ def main():
                 
                 if(current_signal != 'sell'):
                     if(sma_s < sma_l):
-                        #Qty = math.floor((BALANCE / LTP) * mis_multiplier)
+                        Qty = math.floor((BALANCE / LTP) * mis_multiplier)
                         print(Qty)
                         if(Qty >= 1):
                             place_sell_order(ins_scrip, Qty)
                             current_signal = 'sell'
                             tm.sleep(0.2)
                         else:
-                            print("Insufficient Fund")
-                '''       
-                #square_off buy order        
-                if(current_signal == 'buy'):
-                    if(sma_s < sma_l):
-                        place_sell_order(ins_scrip, Qty)
-                        tm.sleep(0.2)
-                        current_signal = ''
-
-                #square_off sell order               
-                if(current_signal == 'sell'):
-                    if(sma_s > sma_l):
-                        place_buy_order(ins_scrip, Qty)
-                        current_signal = ''
-                        tm.sleep(0.2)
-                '''       
+                            print("Insufficient Fund")      
             tm.sleep(1)
         tm.sleep(0.2)  # sleep for 200ms
 # =============================================================================
